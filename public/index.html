@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Parques Próximos</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2rem; }
+    h1 { color: #2e8b57; }
+    button { padding: 10px 20px; font-size: 1rem; }
+    ul { list-style: none; padding: 0; margin-top: 2rem; }
+    li { padding: 10px; background: #f0f0f0; margin-bottom: 10px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Descubra Parques Próximos</h1>
+  <button onclick="buscarParques()">Encontrar Parques</button>
+  <ul id="lista-parques"></ul>
+
+  <script>
+    async function buscarParques() {
+      const lista = document.getElementById('lista-parques');
+      lista.innerHTML = '<li>Buscando localização...</li>';
+
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          const { latitude, longitude } = pos.coords;
+
+          lista.innerHTML = '<li>Buscando parques próximos...</li>';
+
+          try {
+            const response = await fetch('/parques-proximos', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ latitude, longitude })
+            });
+
+            const data = await response.json();
+
+            if (data.parques.length === 0) {
+              lista.innerHTML = '<li>Nenhum parque encontrado.</li>';
+            } else {
+              lista.innerHTML = '';
+              data.parques.forEach(p => {
+                const item = document.createElement('li');
+                item.innerHTML = `<strong>${p.nome}</strong><br>
+                  Latitude: ${p.latitude.toFixed(5)}, Longitude: ${p.longitude.toFixed(5)}`;
+                lista.appendChild(item);
+              });
+            }
+          } catch (err) {
+            lista.innerHTML = '<li>Erro ao buscar parques.</li>';
+            console.error(err);
+          }
+        }, () => {
+          lista.innerHTML = '<li>Não foi possível acessar sua localização.</li>';
+        });
+      } else {
+        lista.innerHTML = '<li>Geolocalização não suportada.</li>';
+      }
+    }
+  </script>
+</body>
+</html>
