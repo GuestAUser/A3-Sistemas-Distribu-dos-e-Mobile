@@ -2,21 +2,106 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Parques Próximos</title>
+  <title>Parques Próximos e Cadastro/Login</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 2rem; }
-    h1 { color: #2e8b57; }
-    button { padding: 10px 20px; font-size: 1rem; }
-    ul { list-style: none; padding: 0; margin-top: 2rem; }
-    li { padding: 10px; background: #f0f0f0; margin-bottom: 10px; border-radius: 5px; }
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    h1 {
+      color: #2e8b57;
+    }
+
+    input, button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 1rem;
+    }
+
+    #resposta {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #2e8b57;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 2rem;
+    }
+
+    li {
+      padding: 10px;
+      background: #f0f0f0;
+      margin-bottom: 10px;
+      border-radius: 5px;
+    }
+
+    section {
+      margin-bottom: 3rem;
+    }
   </style>
 </head>
 <body>
-  <h1>Descubra Parques Próximos</h1>
-  <button onclick="buscarParques()">Encontrar Parques</button>
-  <ul id="lista-parques"></ul>
+  <h1>Bem-vindo</h1>
+
+  <section>
+    <h2>Cadastro</h2>
+    <input type="text" id="nome" placeholder="Nome"><br>
+    <input type="text" id="cpf" placeholder="CPF"><br>
+    <input type="email" id="email" placeholder="Email"><br>
+    <input type="password" id="senha" placeholder="Senha"><br>
+    <button onclick="cadastrar()">Cadastrar</button>
+  </section>
+
+  <section>
+    <h2>Login</h2>
+    <input type="email" id="login-email" placeholder="Email"><br>
+    <input type="password" id="login-senha" placeholder="Senha"><br>
+    <button onclick="login()">Login</button>
+  </section>
+
+  <section>
+    <h2>Parques Próximos</h2>
+    <button onclick="buscarParques()">Encontrar Parques</button>
+    <ul id="lista-parques"></ul>
+  </section>
+
+  <div id="resposta"></div>
 
   <script>
+    async function cadastrar() {
+      const nome = document.getElementById('nome').value;
+      const cpf = document.getElementById('cpf').value;
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+
+      const res = await fetch('/criar-usuario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, cpf, email, senha })
+      });
+
+      const data = await res.json();
+      document.getElementById('resposta').textContent = data.message;
+    }
+
+    async function login() {
+      const email = document.getElementById('login-email').value;
+      const senha = document.getElementById('login-senha').value;
+
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha })
+      });
+
+      const data = await res.json();
+      document.getElementById('resposta').textContent = data.message;
+    }
+
     async function buscarParques() {
       const lista = document.getElementById('lista-parques');
       lista.innerHTML = '<li>Buscando localização...</li>';
