@@ -1,4 +1,4 @@
-# Projeto Fitness – Encontrador de Parques
+# Projeto Fitness – Localizando Atividades
 
 **Versão API:** 2.45.3 • **Autor:** [GuestAUser](https://github.com/GuestAUser)
 
