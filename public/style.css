@@ -18,6 +18,7 @@
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.3);
   --gradient: linear-gradient(135deg, var(--accent) 0%, #06b6d4 100%);
+}
 /* CEP Input Formatting Feedback */
 .input-group input[name="cep"] {
   font-variant-numeric: tabular-nums;
@@ -930,14 +931,69 @@ input.pulse {
   border: 1px solid var(--card-border);
 }
 
+/* Enhanced dark theme popup styles */
+[data-theme="dark"] .leaflet-popup-content-wrapper {
+  background: rgba(20, 20, 20, 0.95);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.4), var(--shadow);
+}
+
+[data-theme="dark"] .leaflet-popup-content {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .leaflet-popup-tip {
+  background: rgba(20, 20, 20, 0.95);
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+[data-theme="dark"] .leaflet-popup-close-button {
+  color: var(--accent);
+  font-size: 24px;
+  font-weight: bold;
+}
+
+[data-theme="dark"] .leaflet-popup-close-button:hover {
+  color: var(--accent-hover);
+}
+
+/* Enhanced marker styles for dark theme */
+[data-theme="dark"] .park-marker-icon,
+[data-theme="dark"] .center-marker-icon {
+  background: rgba(20, 20, 20, 0.9);
+  border-width: 3px;
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.6), 0 4px 20px rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="dark"] .park-marker-icon {
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .center-marker-icon {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.6), 0 4px 20px rgba(0, 0, 0, 0.8);
+}
+
 .park-popup h3 {
   margin: 0 0 0.5rem 0;
   color: var(--accent);
+  font-size: 1.1rem;
 }
 
 .park-popup p {
   margin: 0.25rem 0;
   font-size: 0.875rem;
+}
+
+[data-theme="dark"] .park-popup h3 {
+  color: #67e8f9;
+  text-shadow: 0 0 10px rgba(103, 232, 249, 0.5);
+}
+
+[data-theme="dark"] .park-popup p {
+  color: #e2e8f0;
 }
 
 /* Footer */
@@ -1079,4 +1135,4 @@ footer {
   .map-card {
     height: 400px;
   }
-}}
+}
