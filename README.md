@@ -106,8 +106,7 @@ CREATE TABLE user_ceps (
 ## 📈 Roadmap
 
 * Persistência de sessões com JWT ou cookies assinados
-* Dockerfile e docker-compose para facilitar deploy
-* Troca opcional do SQLite por Postgres
+* Troca de API e uso de CEP por serviços mais consolidados e padronizados
 * Testes automatizados (Jest/Supertest)
 * Integração CI/CD (GitHub Actions)
 
