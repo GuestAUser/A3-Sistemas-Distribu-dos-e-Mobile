@@ -1,148 +1,180 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <title>Parques Próximos e Cadastro/Login</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-      text-align: center;
-    }
-
-    h1 {
-      color: #2e8b57;
-    }
-
-    input, button {
-      margin: 5px;
-      padding: 10px;
-      font-size: 1rem;
-    }
-
-    #resposta {
-      margin-top: 15px;
-      font-weight: bold;
-      color: #2e8b57;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin-top: 2rem;
-    }
-
-    li {
-      padding: 10px;
-      background: #f0f0f0;
-      margin-bottom: 10px;
-      border-radius: 5px;
-    }
-
-    section {
-      margin-bottom: 3rem;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projeto Fitness - Encontre Parques</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
-  <h1>Bem-vindo</h1>
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loader">
+      <div class="loader-circle"></div>
+      <div class="loader-text">Carregando...</div>
+    </div>
+  </div>
 
-  <section>
-    <h2>Cadastro</h2>
-    <input type="text" id="nome" placeholder="Nome"><br>
-    <input type="text" id="cpf" placeholder="CPF"><br>
-    <input type="email" id="email" placeholder="Email"><br>
-    <input type="password" id="senha" placeholder="Senha"><br>
-    <button onclick="cadastrar()">Cadastrar</button>
-  </section>
+  <!-- Animated background particles -->
+  <div class="particles" id="particles"></div>
 
-  <section>
-    <h2>Login</h2>
-    <input type="email" id="login-email" placeholder="Email"><br>
-    <input type="password" id="login-senha" placeholder="Senha"><br>
-    <button onclick="login()">Login</button>
-  </section>
+  <header>
+    <div class="logo-container">
+      <div class="logo-icon">🏋️‍♂️</div>
+      <h1 class="logo-text">Projeto Fitness</h1>
+    </div>
+    <div class="header-actions">
+      <button id="themeToggle" class="theme-toggle" aria-label="Alternar tema">
+        <span class="theme-icon">🌓</span>
+      </button>
+      <button id="userMenuBtn" class="user-menu-btn" hidden>
+        <span class="user-avatar">👤</span>
+        <span class="user-name"></span>
+      </button>
+    </div>
+  </header>
 
-  <section>
-    <h2>Parques Próximos</h2>
-    <button onclick="buscarParques()">Encontrar Parques</button>
-    <ul id="lista-parques"></ul>
-  </section>
+  <main>
+    <!-- Login Section -->
+    <section id="auth" class="auth-section">
+      <div class="card auth-card">
+        <div class="card-header">
+          <h2>Bem-vindo!</h2>
+          <p class="subtitle">Aqui você encontra os melhores parques perto de você!</p>
+        </div>
+        
+        <form id="loginForm" class="auth-form">
+          <div class="input-group">
+            <input type="email" placeholder="E-mail" name="email" required />
+            <span class="input-icon">📧</span>
+          </div>
+          
+          <div class="input-group">
+            <input type="password" placeholder="Senha" name="senha" required />
+            <span class="input-icon">🔒</span>
+          </div>
+          
+          <button class="btn-primary" type="submit">
+            <span class="btn-text">Entrar</span>
+            <span class="btn-loader" hidden></span>
+          </button>
+        </form>
+        
+        <div id="loginMsg" class="message"></div>
+      </div>
+    </section>
 
-  <div id="resposta"></div>
+    <!-- Parks Section -->
+    <section id="parks" class="parks-section" hidden>
+      <div class="grid">
+        <!-- Search Panel -->
+        <div class="card search-card">
+          <div class="card-header">
+            <h2>🌳 Buscar Parques</h2>
+            <button id="clearHistory" class="btn-secondary" title="Limpar histórico">
+              <span>🗑️</span>
+            </button>
+          </div>
+          
+          <form id="parkForm" class="park-form">
+            <div class="cep-input-container">
+              <div class="input-group">
+                <input 
+                  type="text" 
+                  placeholder="Digite o CEP (ex: 30130010)" 
+                  name="cep" 
+                  maxlength="9"
+                  pattern="\d{8}"
+                  required 
+                  title="Digite 8 números do CEP - Teste com 30130010 (BH) ou 04094050 (SP)"
+                  autocomplete="postal-code"
+                />
+                <span class="input-icon">📍</span>
+              </div>
+              <div id="cepHelper" class="cep-helper" hidden>
+                ✨ CEP formatado automaticamente
+              </div>
+              
+              <!-- Recent CEPs -->
+              <div id="recentCeps" class="recent-ceps" hidden>
+                <p class="recent-label">CEPs recentes:</p>
+                <div id="cepChips" class="cep-chips"></div>
+              </div>
+            </div>
+            
+            <div class="range-container">
+              <label class="range-label">
+                Raio de busca: <span id="raioValue">3km</span>
+              </label>
+              <input 
+                type="range" 
+                name="raio" 
+                min="500" 
+                max="10000" 
+                step="500" 
+                value="3000" 
+                id="raioSlider" 
+                class="range-slider"
+              />
+              <div class="range-marks">
+                <span>500m</span>
+                <span>5km</span>
+                <span>10km</span>
+              </div>
+            </div>
+            
+            <button class="btn-primary" type="submit">
+              <span class="btn-text">Buscar Parques</span>
+              <span class="btn-loader" hidden></span>
+            </button>
+          </form>
+          
+          <!-- Results -->
+          <div class="results-container">
+            <div class="park-stats">
+              <p id="parkCount" class="park-count">Nenhuma busca realizada</p>
+              <div id="searchLocation" class="search-location"></div>
+            </div>
+            
+            <ul id="parkList" class="park-list"></ul>
+          </div>
+        </div>
+        
+        <!-- Map Panel -->
+        <div class="card map-card">
+          <div id="mapContainer" class="map-container">
+            <div id="map"></div>
+            <div class="map-controls">
+              <button id="zoomIn" class="map-btn" title="Aumentar zoom">+</button>
+              <button id="zoomOut" class="map-btn" title="Diminuir zoom">−</button>
+              <button id="centerMap" class="map-btn" title="Centralizar">⊙</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 
-  <script>
-    async function cadastrar() {
-      const nome = document.getElementById('nome').value;
-      const cpf = document.getElementById('cpf').value;
-      const email = document.getElementById('email').value;
-      const senha = document.getElementById('senha').value;
+  <footer>
+    <p>Projeto Fitness &copy; 2025 • GuestAUser</p>
+  </footer>
 
-      const res = await fetch('/criar-usuario', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, cpf, email, senha })
-      });
+  <!-- User menu dropdown -->
+  <div id="userMenu" class="user-menu" hidden>
+    <div class="user-menu-header">
+      <span class="user-menu-avatar">👤</span>
+      <div>
+        <p class="user-menu-name"></p>
+        <p class="user-menu-email"></p>
+      </div>
+    </div>
+    <button id="logoutBtn" class="btn-logout">
+      <span>🚪</span> Sair
+    </button>
+  </div>
 
-      const data = await res.json();
-      document.getElementById('resposta').textContent = data.message;
-    }
-
-    async function login() {
-      const email = document.getElementById('login-email').value;
-      const senha = document.getElementById('login-senha').value;
-
-      const res = await fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha })
-      });
-
-      const data = await res.json();
-      document.getElementById('resposta').textContent = data.message;
-    }
-
-    async function buscarParques() {
-      const lista = document.getElementById('lista-parques');
-      lista.innerHTML = '<li>Buscando localização...</li>';
-
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-          const { latitude, longitude } = pos.coords;
-
-          lista.innerHTML = '<li>Buscando parques próximos...</li>';
-
-          try {
-            const response = await fetch('/parques-proximos', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ latitude, longitude })
-            });
-
-            const data = await response.json();
-
-            if (data.parques.length === 0) {
-              lista.innerHTML = '<li>Nenhum parque encontrado.</li>';
-            } else {
-              lista.innerHTML = '';
-              data.parques.forEach(p => {
-                const item = document.createElement('li');
-                item.innerHTML = `<strong>${p.nome}</strong><br>
-                  Latitude: ${p.latitude.toFixed(5)}, Longitude: ${p.longitude.toFixed(5)}`;
-                lista.appendChild(item);
-              });
-            }
-          } catch (err) {
-            lista.innerHTML = '<li>Erro ao buscar parques.</li>';
-            console.error(err);
-          }
-        }, () => {
-          lista.innerHTML = '<li>Não foi possível acessar sua localização.</li>';
-        });
-      } else {
-        lista.innerHTML = '<li>Geolocalização não suportada.</li>';
-      }
-    }
-  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="script.js"></script>
 </body>
 </html>
