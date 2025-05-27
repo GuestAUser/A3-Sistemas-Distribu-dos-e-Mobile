@@ -18,7 +18,7 @@ Um aplicativo full-stack que localiza parques públicos próximos a um CEP brasi
 
 ## 🗂️ Estrutura do código
 
-```
+```ruby
 .
 ├── index.js          # API REST (Express 23 + SQLite)
 ├── db.js             # Configuração e instância do banco
