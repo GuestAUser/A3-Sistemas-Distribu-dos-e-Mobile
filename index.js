@@ -245,7 +245,7 @@ app.get('/api/geo/cep/:cep', asyncH(async (req, res) => {
       .filter(part => part && part.trim())
       .join(', ');
     
-    const searchQuery = encodeURIComponent(addressParts);
+    const searchQuery = encodeURIComponent(searchAddress);
 
     let nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${searchQuery}&format=json&limit=1&countrycodes=br`;
     
@@ -342,7 +342,7 @@ app.get('/api/geo/cep/:cep', asyncH(async (req, res) => {
       success: true, 
       lat: Number(lat), 
       lon: Number(lon), 
-      endereco: addressParts
+      endereco: searchAddress
     });
     
   } catch (error) {
