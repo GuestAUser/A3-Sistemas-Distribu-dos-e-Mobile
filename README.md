@@ -1,156 +1,126 @@
+# Projeto Fitness – Encontrador de Parques
 
-# Sistema de Cadastro de Usuários com Localização
+**Versão API:** 2.45.3 • **Autor:** [GuestAUser](https://github.com/GuestAUser)
 
-Este projeto é uma aplicação backend desenvolvida em Node.js, que realiza o cadastro de usuários com suas informações pessoais, incluindo nome, CPF, email, senha e localização (latitude e longitude). As informações são armazenadas em um banco de dados SQLite. A aplicação também oferece funcionalidades de login e manipulação de dados de usuários.
+Um aplicativo full-stack que localiza parques públicos próximos a um CEP brasileiro, fornecendo um mapa interativo, estatísticas e histórico de buscas personalizadas. 100 % em JavaScript/Node 23, sem dependências externas de servidores ou bancos além de serviços públicos de geocodificação.
 
-## Tecnologias Utilizadas
+---
 
-- **Node.js**: Plataforma JavaScript no lado do servidor.
-- **Express**: Framework para construção de APIs em Node.js.
-- **SQLite3**: Banco de dados local utilizado para armazenar os dados dos usuários.
-- **Axios**: Biblioteca para realizar requisições HTTP.
-- **CORS**: Permite comunicação entre o frontend e o backend de diferentes origens.
-- **Bcryptjs**: Biblioteca para criptografar senhas dos usuários.
+## 🔍 Visão geral do funcionamento
 
-## Pré-requisitos
+1. **Autenticação** – O usuário cria conta / faz login (credenciais criptografadas com *bcrypt*).
+2. **Geocodificação** – A API transforma o CEP em coordenadas (ViaCEP ➜ Nominatim) com *fallback* para centros urbanos comuns.
+3. **Busca de parques** – O servidor consulta a Overpass API (OpenStreetMap) e devolve parques, jardins, playgrounds e reservas naturais num raio configurável.
+4. **Histórico inteligente** – Cada CEP pesquisado é registrado; os mais usados aparecem como *chips* para busca rápida.
+5. **Frontend reativo** – Interface estática (HTML + CSS + JS) exibe os resultados em lista e em mapa **Leaflet**, com animações suaves e temas claro/escuro.
 
-- **Node.js** instalado na sua máquina.
-- **SQLite3** para interagir com o banco de dados SQLite.
+---
 
-### Instalação do Node.js
+## 🗂️ Estrutura do código
 
-Se ainda não tiver o Node.js, você pode baixá-lo [aqui](https://nodejs.org/).
+```
+.
+├── index.js          # API REST (Express 23 + SQLite)
+├── db.js             # Configuração e instância do banco
+├── public/
+│   ├── index.html    # Página única (SPA vanilla)
+│   ├── style.css     # Estilos modernos, partículas e responsividade
+│   └── script.js     # Lógica de UI, integração com API e Leaflet
+└── README.md
+```
 
-### Instalação do SQLite3 (se necessário)
+### Backend (`index.js`)
 
-Caso precise interagir diretamente com o banco de dados SQLite, siga os passos abaixo:
+* **Segurança**: Helmet, CORS restritivo, *rate-limiter* in-memory, validações *Joi*.
+* **Logs**: Winston com saída colorida e `HH:mm:ss`.
+* **Migrações**: Tabelas `usuarios` e `user_ceps` são criadas automaticamente.
+* **Principais rotas**
 
-1. Baixe o [sqlite-tools](https://www.sqlite.org/download.html).
-2. Extraia o arquivo e adicione o caminho da pasta onde o `sqlite3.exe` foi extraído ao **caminho de sistema** do Windows.
+  | Método | Caminho                  | Descrição                           |
+  | ------ | ------------------------ | ----------------------------------- |
+  | GET    | `/api/saude`             | Health-check com versão e timestamp |
+  | POST   | `/api/usuarios`          | Cria novo usuário                   |
+  | POST   | `/api/auth/login`        | Autentica e devolve CEPs recentes   |
+  | GET    | `/api/geo/cep/:cep`      | Converte CEP em coordenadas         |
+  | GET    | `/api/parques?cep&raio`  | Lista parques próximos              |
+  | GET    | `/api/usuarios/:id/ceps` | Histórico do usuário                |
+  | DELETE | idem                     | Limpa histórico                     |
 
-## Como Rodar o Projeto
+### Frontend (`public/*`)
 
-### Passo 1: Clonar o repositório
+* **index.html** – Estrutura sem frameworks; carrega Leaflet via CDN.
+* **style.css** – Tema escuro/claro, partículas, micro-animações (keyframes) e *utility classes* CSS.
+* **script.js** – Autenticação, formatação de CEP, chamadas REST, renderização de markers, *chips* de histórico, controle de zoom.
+
+---
+
+## 🚀 Como executar localmente
 
 ```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
-cd seu-repositorio
+# 1. Clone o repositório
+$ git clone https://github.com/GuestAUser/projeto-fitness.git && cd projeto-fitness
+
+# 2. Instale dependências
+$ npm install
+
+# 3. Configure variáveis de ambiente
+$ cp .env.example .env    # edite PORT e ALLOWED_ORIGINS se necessário
+
+# 4. Inicie a API
+$ node index.js
+
+# 5. Abra a interface
+$ open public/index.html   # ou sirva com qualquer servidor estático
 ```
 
-### Passo 2: Instalar as dependências
+> **Banco de dados:** é criado automaticamente como `data.db` na raiz do projeto.
 
-No diretório do projeto, instale as dependências necessárias utilizando o npm:
+---
 
-```bash
-npm install
+## 🗄️ Esquema do banco
+
+```sql
+CREATE TABLE usuarios (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome TEXT NOT NULL,
+  cpf TEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL UNIQUE,
+  senha TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_ceps (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  cep TEXT NOT NULL,
+  search_count INTEGER DEFAULT 1,
+  last_searched DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  UNIQUE (user_id, cep)
+);
 ```
 
-### Passo 3: Rodar o servidor
+---
 
-Execute o seguinte comando para rodar o servidor Node.js:
+## 📈 Roadmap
 
-```bash
-node index.js
-```
+* Persistência de sessões com JWT ou cookies assinados
+* Dockerfile e docker-compose para facilitar deploy
+* Troca opcional do SQLite por Postgres
+* Testes automatizados (Jest/Supertest)
+* Integração CI/CD (GitHub Actions)
 
-Isso fará o servidor rodar na porta 3000, acessível em `http://localhost:3000`.
+---
 
-### Passo 4: Frontend (HTML)
+## 🤝 Contribuindo
 
-Abra o arquivo `index.html` diretamente no navegador ou utilize um servidor local, como o **Live Server** no Visual Studio Code, para interagir com a API.
+1. *Fork* ➜ *branch* ➜ *pull request*.
+2. Use *commits* claros (`feat:`, `fix:`, `docs:` …).
+3. Respeite o padrão ESLint (**airbnb-base**).
 
-## Endpoints da API
+---
 
-### 1. **POST /criar-usuario**
-Responsável pelo cadastro de um novo usuário.
+## 📜 Licença
 
-#### Body da requisição:
-```json
-{
-  "nome": "Nome do Usuário",
-  "cpf": "000.000.000-00",
-  "email": "email@dominio.com",
-  "senha": "senha-segura",
-  "latitude": "12.3456",
-  "longitude": "98.7654"
-}
-```
-
-#### Resposta:
-- Sucesso:
-  ```json
-  {
-    "success": true,
-    "message": "Usuário criado com sucesso!"
-  }
-  ```
-- Erro:
-  ```json
-  {
-    "success": false,
-    "message": "Erro ao criar usuário. Verifique se o CPF ou Email já está cadastrado."
-  }
-  ```
-
-### 2. **POST /login**
-Responsável pelo login de um usuário, usando email e senha.
-
-#### Body da requisição:
-```json
-{
-  "email": "email@dominio.com",
-  "senha": "senha-segura"
-}
-```
-
-#### Resposta:
-- Sucesso:
-  ```json
-  {
-    "success": true,
-    "message": "Login realizado com sucesso!",
-    "nome": "Nome do Usuário"
-  }
-  ```
-- Erro:
-  ```json
-  {
-    "success": false,
-    "message": "Email ou senha incorretos."
-  }
-  ```
-
-## Estrutura do Banco de Dados
-
-O banco de dados SQLite armazena as informações dos usuários na tabela `Usuarios` com os seguintes campos:
-
-- **id**: ID do usuário (auto-incrementado)
-- **nome**: Nome do usuário
-- **cpf**: CPF do usuário (único)
-- **email**: Email do usuário (único)
-- **senha**: Senha criptografada do usuário
-- **latitude**: Latitude da localização do usuário
-- **longitude**: Longitude da localização do usuário
-
-## Como Interagir com o Banco de Dados
-
-- Para acessar diretamente o banco de dados SQLite, utilize a ferramenta `sqlite3` no terminal:
-  ```bash
-  sqlite3 database.sqlite
-  ```
-- Para visualizar as tabelas:
-  ```sql
-  .tables
-  ```
-- Para visualizar os dados da tabela `Usuarios`:
-  ```sql
-  SELECT * FROM Usuarios;
-  ```
-
-## Considerações Finais
-
-Esse projeto serve como um exemplo de integração entre Node.js, SQLite, e o uso de APIs RESTful para gerenciamento de usuários com informações pessoais e localização. Ele pode ser expandido para incluir funcionalidades como validação de dados, envio de e-mails, entre outros.
-
-## Licença
-
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto é distribuído sob a **GuestAUser Public License v1.0 – Sem Uso Comercial**. Leia o arquivo [LICENSE](./LICENSE) para detalhes.
