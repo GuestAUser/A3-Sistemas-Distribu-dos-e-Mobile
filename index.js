@@ -252,7 +252,7 @@ app.get('/api/geo/cep/:cep', asyncH(async (req, res) => {
     logger.info(`Geocoding: ${decodeURIComponent(searchQuery)}`);
     
     let nominatimResponse = await axios.get(nominatimUrl, {
-      headers: { 'User-Agent': 'ProjetoFitness/1.0 (UniBH)' },
+      headers: { 'User-Agent': 'ProjetoFitness/2.45.3 (UniBH)' },
       timeout: 5000
     });
     
@@ -263,7 +263,7 @@ app.get('/api/geo/cep/:cep', asyncH(async (req, res) => {
       logger.info(`Trying neighborhood search: ${decodeURIComponent(neighborhoodQuery)}`);
       
       nominatimResponse = await axios.get(nominatimUrl, {
-        headers: { 'User-Agent': 'ProjetoFitness/1.0 (UniBH)' },
+        headers: { 'User-Agent': 'ProjetoFitness/2.45.3 (UniBH)' },
         timeout: 5000
       });
     }
@@ -275,7 +275,7 @@ app.get('/api/geo/cep/:cep', asyncH(async (req, res) => {
       logger.info(`Fallback to city search: ${decodeURIComponent(cityQuery)}`);
       
       nominatimResponse = await axios.get(nominatimUrl, {
-        headers: { 'User-Agent': 'ProjetoFitness/1.0 (UniBH)' },
+        headers: { 'User-Agent': 'ProjetoFitness/2.45.3 (UniBH)' },
         timeout: 5000
       });
     }
