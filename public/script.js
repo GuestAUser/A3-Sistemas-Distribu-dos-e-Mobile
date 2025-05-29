@@ -1,4 +1,6 @@
 let currentUser = null;
+let accessToken = null;
+let refreshToken = null;
 let map = null;
 let searchCircle = null;
 let parkMarkers = [];
@@ -49,8 +51,62 @@ function showMessage(element, text, type = 'info') {
   element.style.animation = 'slideIn 0.3s ease-out';
 }
 
-function initMap() {
+async function apiRequest(url, options = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
 
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+
+  if (response.status === 401 && refreshToken) {
+    const data = await response.json();
+    if (data.code === 'TOKEN_EXPIRED') {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+
+        headers['Authorization'] = `Bearer ${accessToken}`;
+        return fetch(url, { ...options, headers });
+      }
+    }
+  }
+
+  return response;
+}
+
+async function refreshAccessToken() {
+  try {
+    const response = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      accessToken = data.accessToken;
+      refreshToken = data.refreshToken;
+      return true;
+    }
+  } catch (error) {
+    console.error('Failed to refresh token:', error);
+  }
+
+  accessToken = null;
+  refreshToken = null;
+  currentUser = null;
+  location.reload();
+  return false;
+}
+
+function initMap() {
   map = L.map('map', {
     zoomControl: false,
     attributionControl: true
@@ -82,16 +138,12 @@ function initMap() {
 }
 
 function formatCEP(cep) {
-
   const cleaned = cep.toString().replace(/\D/g, '');
-
   if (cleaned.length !== 8) return cep;
-
   return cleaned.replace(/(\d{5})(\d{3})/, '$1-$2');
 }
 
 function cleanCEP(cep) {
-
   return cep.toString().replace(/\D/g, '').substring(0, 8);
 }
 
@@ -142,7 +194,11 @@ loginForm.addEventListener('submit', async (e) => {
     const data = await response.json();
 
     if (data.success) {
+
       currentUser = data.user;
+      accessToken = data.accessToken;
+      refreshToken = data.refreshToken;
+
       showMessage(loginMsg, `Bem-vindo, ${data.user.nome}!`, 'success');
 
       setTimeout(() => {
@@ -174,7 +230,6 @@ loginForm.addEventListener('submit', async (e) => {
     showMessage(loginMsg, 'Erro ao conectar ao servidor', 'error');
     console.error(error);
   } finally {
-
     btnText.style.display = 'inline';
     btnLoader.hidden = true;
     submitBtn.disabled = false;
@@ -221,28 +276,24 @@ parkForm.addEventListener('submit', async (e) => {
 
   try {
     const formData = Object.fromEntries(new FormData(parkForm));
-
     formData.cep = cleanCEP(formData.cep);
 
     const params = new URLSearchParams(formData);
 
-    const response = await fetch('/api/parques?' + params, {
-      headers: {
-        'X-User-Id': currentUser?.id || ''
-      }
-    });
-
+    const response = await apiRequest('/api/parques?' + params);
     const data = await response.json();
 
     console.log('Resposta da busca:', data);
 
     if (!data.success) {
-
       let errorMessage = data.message;
       if (data.message === 'CEP não encontrado') {
         errorMessage = '❌ CEP não encontrado. Verifique se o CEP está correto.';
       } else if (data.message === 'Não foi possível determinar as coordenadas deste CEP') {
         errorMessage = '❌ Não conseguimos localizar este CEP no mapa. Tente um CEP próximo.';
+      } else if (data.code === 'NO_TOKEN') {
+        errorMessage = '❌ Sessão expirada. Faça login novamente.';
+        setTimeout(() => location.reload(), 2000);
       }
 
       parkList.innerHTML = `<li class="error-item">${errorMessage}</li>`;
@@ -378,7 +429,6 @@ parkForm.addEventListener('submit', async (e) => {
     parkCount.textContent = 'Erro na busca';
     console.error(error);
   } finally {
-
     btnText.style.display = 'inline';
     btnLoader.hidden = true;
     submitBtn.disabled = false;
@@ -389,7 +439,7 @@ async function updateRecentCeps() {
   if (!currentUser) return;
 
   try {
-    const response = await fetch(`/api/usuarios/${currentUser.id}/ceps`);
+    const response = await apiRequest(`/api/usuarios/${currentUser.id}/ceps`);
     const data = await response.json();
 
     if (data.success) {
@@ -406,7 +456,7 @@ clearHistory.addEventListener('click', async () => {
   if (!confirm('Deseja limpar todo o histórico de CEPs?')) return;
 
   try {
-    const response = await fetch(`/api/usuarios/${currentUser.id}/ceps`, {
+    const response = await apiRequest(`/api/usuarios/${currentUser.id}/ceps`, {
       method: 'DELETE'
     });
 
@@ -457,7 +507,6 @@ cepInput.addEventListener('paste', (e) => {
 });
 
 cepInput.addEventListener('input', (e) => {
-
   const cleaned = e.target.value.replace(/\D/g, '');
 
   if (e.target.value !== cleaned) {
@@ -477,27 +526,6 @@ cepInput.addEventListener('input', (e) => {
     const newPos = Math.min(cursorPos, e.target.value.length);
     e.target.setSelectionRange(newPos, newPos);
   }
-});
-
-cepInput.addEventListener('drop', (e) => {
-  e.preventDefault();
-  const droppedText = e.dataTransfer.getData('text');
-  const cleanedCEP = droppedText.replace(/\D/g, '');
-
-  if (droppedText !== cleanedCEP && cleanedCEP.length >= 8) {
-    cepHelper.hidden = false;
-    cepHelper.style.animation = 'none';
-    setTimeout(() => {
-      cepHelper.style.animation = 'fadeInOut 2s ease-out';
-      setTimeout(() => { cepHelper.hidden = true; }, 2000);
-    }, 10);
-  }
-
-  cepInput.classList.add('formatting');
-  setTimeout(() => cepInput.classList.remove('formatting'), 300);
-
-  e.target.value = cleanedCEP.substring(0, 8);
-  e.target.dispatchEvent(new Event('input', { bubbles: true }));
 });
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -538,8 +566,20 @@ userMenu.addEventListener('click', (e) => {
   e.stopPropagation();
 });
 
-logoutBtn.addEventListener('click', () => {
+logoutBtn.addEventListener('click', async () => {
   if (confirm('Deseja realmente sair?')) {
+    try {
+      await apiRequest('/api/auth/logout', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken })
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+
+    accessToken = null;
+    refreshToken = null;
+    currentUser = null;
     location.reload();
   }
 });
