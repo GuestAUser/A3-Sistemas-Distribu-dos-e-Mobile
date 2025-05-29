@@ -17,10 +17,8 @@ console.log('Press Ctrl+C to cancel, or wait 5 seconds to continue...\n');
 setTimeout(async () => {
   console.log('🔐 Resetting passwords...\n');
 
-  // Hash the default password
   const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 12);
 
-  // Update all users
   db.run(
     'UPDATE usuarios SET senha = ?, failed_login_attempts = 0, locked_until = NULL',
     [hashedPassword],
@@ -32,7 +30,6 @@ setTimeout(async () => {
 
       console.log(`✅ Reset ${this.changes} user passwords to '${DEFAULT_PASSWORD}'`);
       
-      // Show all users
       db.all('SELECT id, nome, email FROM usuarios', (err, users) => {
         if (!err && users.length > 0) {
           console.log('\n📋 Users in database:');
