@@ -36,7 +36,7 @@ app.use(rateLimit({ /* Rate limiting progressivo */ }));
 ┌─────────────────────────────────────────────┐
 │               Frontend (SPA)                │
 │  • Leaflet.js (Mapas interativos)           │
-│  • Vanilla JS (ES6 + modules)                │
+│  • Vanilla JS (ES6 + modules)               │
 │  • CSS Grid/Flexbox + Animações             │
 └─────────────────┬───────────────────────────┘
                   │ HTTP/REST API
