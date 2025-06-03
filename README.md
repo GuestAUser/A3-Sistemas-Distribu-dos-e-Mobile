@@ -2,7 +2,7 @@
 
 [FitProject](https://fitness-local-project.onrender.com/)
 
-**Versão API:** 2.45.3 • **Autor:** [GuestAUser](https://github.com/GuestAUser)
+**Versão API:** 3.0.0 • **Autor:** [GuestAUser](https://github.com/GuestAUser)
 
 Um aplicativo full-stack que localiza parques públicos próximos a um CEP brasileiro, fornecendo um mapa interativo, estatísticas e histórico de buscas personalizadas. 100 % em JavaScript/Node 23, sem dependências externas de servidores ou bancos além de serviços públicos de geocodificação.
 
