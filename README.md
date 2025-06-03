@@ -32,7 +32,7 @@ app.use(rateLimit({ /* Rate limiting progressivo */ }));
 
 ### Arquitetura de Camadas
 
-```perl
+```rs
 ┌─────────────────────────────────────────────┐
 │               Frontend (SPA)                │
 │  • Leaflet.js (Mapas interativos)           │
