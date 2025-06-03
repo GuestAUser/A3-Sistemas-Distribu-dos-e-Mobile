@@ -437,7 +437,7 @@ const retryWithBackoff = async (fn, retries = 3) => {
 
 ## 📊 Métricas de Performance
 
-- **Tempo de resposta API**: < 500ms (média)
+- **Tempo de resposta API**: < 110ms (média, slow-server-host)
 - **Renderização do mapa**: < 1s (até 50 markers)
 - **Consulta de banco**: < 100ms (queries indexadas)
 - **Throughput**: 1000+ req/min (com rate limiting)
